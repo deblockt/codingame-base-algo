@@ -71,3 +71,10 @@ private static class RandomChooser<T extends GeneType> implements ToCrossChooser
 }
 
 ```
+
+## Source generator
+
+An helper is available to be able to merge all file on one.
+
+You can run the class `com.deblock.builder.FileBuilder`. 
+The main have the main path as parameter (like `src/main/java/Player.java`)
