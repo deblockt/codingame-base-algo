@@ -204,6 +204,7 @@ public class FileBuilder {
             return Files.readAllLines(Paths.get(fileName), CHARSET);
         } catch (final IOException e) {
             System.err.println("Error while reading file " + fileName);
+            e.printStackTrace();
             throw new IllegalStateException("Unable to continue");
         }
     }
