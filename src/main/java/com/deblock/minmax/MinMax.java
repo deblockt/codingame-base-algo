@@ -1,6 +1,8 @@
 package com.deblock.minmax;
 
 
+import com.deblock.logger.CGLogger;
+
 public class MinMax<BoardType, MoveType extends Move<MoveType>> {
 
 
@@ -14,7 +16,7 @@ public class MinMax<BoardType, MoveType extends Move<MoveType>> {
 
         minMaxNode.simulate(player1, player2, new AlphaBetaZone(), deep);
 
-        System.err.println("max score " + minMaxNode.getScore());
+        CGLogger.log("max score " + minMaxNode.getScore());
         return minMaxNode.getBestMove().getMove();
     }
 }

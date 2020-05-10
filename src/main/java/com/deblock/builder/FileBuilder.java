@@ -1,5 +1,7 @@
 package com.deblock.builder;
 
+import com.deblock.logger.CGLogger;
+
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.DirectoryStream;
@@ -107,7 +109,7 @@ public class FileBuilder {
 
     public static void main(String[] args) {
         if (args.length != 1) {
-            System.err.println("Unexpected number of arguments");
+            CGLogger.log("Unexpected number of arguments");
         } else {
             String fileName = args[0];
             final FileBuilder builder = new FileBuilder(fileName.endsWith(".java"));
@@ -203,7 +205,7 @@ public class FileBuilder {
         try {
             return Files.readAllLines(Paths.get(fileName), CHARSET);
         } catch (final IOException e) {
-            System.err.println("Error while reading file " + fileName);
+            CGLogger.log("Error while reading file " + fileName);
             throw new IllegalStateException("Unable to continue");
         }
     }
