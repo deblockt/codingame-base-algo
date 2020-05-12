@@ -110,6 +110,9 @@ public class Game {
     public List<Position> accessibleCells(Position from, int maximalDeep, int minimalDeep) {
         return this.grid.accessibleCells(from, maximalDeep, minimalDeep);
     }
+    public List<Position> accessibleCells(Position from, int maximalDeep, int minimalDeep, List<Position> otherPacs) {
+        return this.grid.accessibleCells(from, maximalDeep, minimalDeep, otherPacs);
+    }
 
     public List<Pac> getEnemiesOn(List<Position> positions) {
         return player2.getPacs().stream()
@@ -135,4 +138,5 @@ public class Game {
         }
         pac.position(of);
     }
+
 }

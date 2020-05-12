@@ -9,6 +9,7 @@ import com.deblock.packman.move.GoTo;
 import com.deblock.packman.move.PacMove;
 import com.deblock.packman.move.Switch;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -25,7 +26,7 @@ public class SwitchIfNearEnemies implements Behaviours {
     public Optional<PacMove> nextMove(Game game, List<PacMove> partnerMoves) {
         List<Position> accessibleCells =  game.accessibleCells(pac.position(), pac.speed() * 2, 1);
         List<Pac> enemies = game.getEnemiesOn(accessibleCells);
-        CGLogger.log("enemies " + enemies);
+        CGLogger.log("enemies " + enemies );
         if (!enemies.isEmpty()) {
             Pac enemy = enemies.get(0);
             String typeToWin = pac.typeToWin(enemy);
@@ -37,7 +38,7 @@ public class SwitchIfNearEnemies implements Behaviours {
                 Path path = new Path();
                 path.add(enemy.position.x, enemy.position.y);
                 return Optional.of(new GoTo(enemy.position, path, pac, "I will kill you"));
-            } else if ((!typeToWin.equals(pac.typeId) && !pac.typeId.equals(enemy.typeId)) || enemy.abilityCooldown == 0){
+            } else if ((!typeToWin.equals(pac.typeId) && !pac.typeId.equals(enemy.typeId)) || enemy.abilityCooldown == 0) {
                 CGLogger.log("I go back. I don't want to die");
                 List<Position> directAccessibleCells =  game.accessibleCells(pac.position(), pac.speed(), 1);
                 CGLogger.log("accessible cells: " + directAccessibleCells);
@@ -56,12 +57,15 @@ public class SwitchIfNearEnemies implements Behaviours {
                 }
             }
         }
+
         return Optional.empty();
     }
 
     private int scoreCell(Game game, Position cell, Position pacPosition) {
-        int nbAccessCells = game.getGrid().accessibleCells(cell, 10, 1, pacPosition).size();
-        List<Position> nbAccessibleCellsForPellet = game.getGrid().accessibleCells(cell, 2, 1, pacPosition);
+        List<Position> avoidToWalk = new ArrayList<>();
+        avoidToWalk.add(pacPosition);
+        int nbAccessCells = game.getGrid().accessibleCells(cell, 10, 1, avoidToWalk).size();
+        List<Position> nbAccessibleCellsForPellet = game.getGrid().accessibleCells(cell, 2, 1, avoidToWalk);
         int nbPelletAtTwoStep = (int) nbAccessibleCellsForPellet.stream().filter(game::containsPellet).count();
         CGLogger.log("cell " + cell + ", score " + (nbAccessCells - nbPelletAtTwoStep) + " nbAccessible " + nbAccessCells + " nbPellet " + nbPelletAtTwoStep);
         return nbAccessCells + nbPelletAtTwoStep;

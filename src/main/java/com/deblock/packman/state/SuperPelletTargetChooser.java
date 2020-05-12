@@ -26,13 +26,16 @@ public class SuperPelletTargetChooser implements GoToTargetBehaviour.TargetChoos
             Map<Position, Pac> myPacPosition = game.player1.getPacs().stream().collect(Collectors.toMap(Pac::position, Function.identity()));
             List<Position> pacs = duplicateBySymmetry(game, myPacPosition.keySet());
             for (Position pellet : game.getBestPellets()) {
+                CGLogger.log("available pacs " + pacs);
                 Path path = game.getGrid().getPathToNearest(pellet, pacs);
                 if (path != null) {
+                    CGLogger.log("path target " + path.target());
                     if (myPacPosition.containsKey(path.target())) {
                         pacs.remove(path.target());
                         CGLogger.log("pellet " + pellet + " is for pac " + path.target());
                         pelletByPacs.put(myPacPosition.get(path.target()).id, path.reverse().add(pellet.x, pellet.y));
                     } else {
+                        pacs.remove(path.target());
                         CGLogger.log("pellet " + pellet + " is for enemy");
                     }
                 }

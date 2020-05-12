@@ -15,7 +15,7 @@ public interface Grid {
 
     List<Position> accessibleCells(Position from, int deep, int minimalDeep);
 
-    List<Position> accessibleCells(Position from, int deep, int minimalDeep, Position avoidWalkOn);
+    List<Position> accessibleCells(Position from, int deep, int minimalDeep, List<Position> avoidWalkOn);
 
     String toString(Collection<Pellet> pellets, Game game);
 

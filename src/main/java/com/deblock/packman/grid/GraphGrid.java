@@ -40,11 +40,11 @@ public class GraphGrid implements Grid {
 
     @Override
     public List<Position> accessibleCells(Position from, int deep, int minimalDeep) {
-        return accessibleCells(from, deep, minimalDeep, null);
+        return accessibleCells(from, deep, minimalDeep, new ArrayList<>());
     }
 
     @Override
-    public List<Position> accessibleCells(Position from, int deep, int minimalDeep, Position avoidWalkOn) {
+    public List<Position> accessibleCells(Position from, int deep, int minimalDeep, List<Position> avoidWalkOn) {
         CGLogger.log("start computing accessible cells from " + from + " deep = " + deep);
         Set<Position> positions = new HashSet<>();
         Set<GridPosition> done = new HashSet<>();
@@ -52,7 +52,9 @@ public class GraphGrid implements Grid {
         toDo.add(from);
         done.add(nodes.get(from));
         if (avoidWalkOn != null) {
-            done.add(nodes.get(avoidWalkOn));
+            for (Position pos: avoidWalkOn) {
+                done.add(nodes.get(pos));
+            }
         }
         int currentDeep = 0;
         while (!toDo.isEmpty() && currentDeep <= deep) {

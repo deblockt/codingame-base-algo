@@ -187,13 +187,16 @@ class Player {
 	            Map<Position, Pac> myPacPosition = game.player1.getPacs().stream().collect(Collectors.toMap(Pac::position, Function.identity()));
 	            List<Position> pacs = duplicateBySymmetry(game, myPacPosition.keySet());
 	            for (Position pellet : game.getBestPellets()) {
+	                CGLogger.log("available pacs " + pacs);
 	                Path path = game.getGrid().getPathToNearest(pellet, pacs);
 	                if (path != null) {
+	                    CGLogger.log("path target " + path.target());
 	                    if (myPacPosition.containsKey(path.target())) {
 	                        pacs.remove(path.target());
 	                        CGLogger.log("pellet " + pellet + " is for pac " + path.target());
 	                        pelletByPacs.put(myPacPosition.get(path.target()).id, path.reverse().add(pellet.x, pellet.y));
 	                    } else {
+	                        pacs.remove(path.target());
 	                        CGLogger.log("pellet " + pellet + " is for enemy");
 	                    }
 	                }
@@ -306,19 +309,25 @@ class Player {
 	        return Optional.empty();
 	    }
 	    private Optional<Position> tryToMove(Game game, int deep) {
-	        List<Position> cells = game.accessibleCells(pac.position, deep, pac.speed());
-	        List<Position> nonVisitedPositions = cells.stream().filter(p -> !game.player1HistoryPosition.contains(p)).collect(Collectors.toList());
-	        Optional<Position> nonVisitedPositionsWithPellet = nonVisitedPositions.stream().filter(game::containsPellet).max(Comparator.comparingInt(pos -> nbPelletNear(game, pos)));
+	        List<Position> otherPacs = game.player1.getPacs().stream()
+	                .filter(pac -> pac.id != this.pac.id)
+	                .map(pac -> pac.position)
+	                .collect(Collectors.toList());
+	        List<Position> cells = game.accessibleCells(pac.position, deep, pac.speed(), otherPacs);
+	        List<Position> nonVisitedPositions = cells.stream()
+	                .filter(p -> !game.player1HistoryPosition.contains(p))
+	                .collect(Collectors.toList());
+	        Optional<Position> nonVisitedPositionsWithPellet = nonVisitedPositions.stream().max(Comparator.comparingInt(pos -> nbPelletNear(game, pos)));
 	        CGLogger.log("accessible cells " + cells);
 	        CGLogger.log("non visited cells " + nonVisitedPositions);
 	        CGLogger.log("non visited position with pellet " + nonVisitedPositionsWithPellet);
 	        if (nonVisitedPositionsWithPellet.isPresent()) {
 	            CGLogger.log("go to nearest pellet");
 	            return nonVisitedPositionsWithPellet;
-	        } else if (nonVisitedPositions.size() > 0) {
+	        } /*else if (nonVisitedPositions.size() > 0) {
 	            CGLogger.log("go to nearest non visited position");
 	            return Optional.of(nonVisitedPositions.get(0));
-	        } else {
+	        } */else {
 	            return Optional.empty();
 	        }
 	    }
@@ -415,7 +424,7 @@ class Player {
 	    public Optional<PacMove> nextMove(Game game, List<PacMove> partnerMoves) {
 	        List<Position> accessibleCells =  game.accessibleCells(pac.position(), pac.speed() * 2, 1);
 	        List<Pac> enemies = game.getEnemiesOn(accessibleCells);
-	        CGLogger.log("enemies " + enemies);
+	        CGLogger.log("enemies " + enemies );
 	        if (!enemies.isEmpty()) {
 	            Pac enemy = enemies.get(0);
 	            String typeToWin = pac.typeToWin(enemy);
@@ -427,7 +436,7 @@ class Player {
 	                Path path = new Path();
 	                path.add(enemy.position.x, enemy.position.y);
 	                return Optional.of(new GoTo(enemy.position, path, pac, "I will kill you"));
-	            } else if ((!typeToWin.equals(pac.typeId) && !pac.typeId.equals(enemy.typeId)) || enemy.abilityCooldown == 0){
+	            } else if ((!typeToWin.equals(pac.typeId) && !pac.typeId.equals(enemy.typeId)) || enemy.abilityCooldown == 0) {
 	                CGLogger.log("I go back. I don't want to die");
 	                List<Position> directAccessibleCells =  game.accessibleCells(pac.position(), pac.speed(), 1);
 	                CGLogger.log("accessible cells: " + directAccessibleCells);
@@ -449,8 +458,10 @@ class Player {
 	        return Optional.empty();
 	    }
 	    private int scoreCell(Game game, Position cell, Position pacPosition) {
-	        int nbAccessCells = game.getGrid().accessibleCells(cell, 10, 1, pacPosition).size();
-	        List<Position> nbAccessibleCellsForPellet = game.getGrid().accessibleCells(cell, 2, 1, pacPosition);
+	        List<Position> avoidToWalk = new ArrayList<>();
+	        avoidToWalk.add(pacPosition);
+	        int nbAccessCells = game.getGrid().accessibleCells(cell, 10, 1, avoidToWalk).size();
+	        List<Position> nbAccessibleCellsForPellet = game.getGrid().accessibleCells(cell, 2, 1, avoidToWalk);
 	        int nbPelletAtTwoStep = (int) nbAccessibleCellsForPellet.stream().filter(game::containsPellet).count();
 	        CGLogger.log("cell " + cell + ", score " + (nbAccessCells - nbPelletAtTwoStep) + " nbAccessible " + nbAccessCells + " nbPellet " + nbPelletAtTwoStep);
 	        return nbAccessCells + nbPelletAtTwoStep;
@@ -606,7 +617,7 @@ class Player {
 	    Path path(Position position, Position position1);
 	    void refresh(List<Pac> pacs);
 	    List<Position> accessibleCells(Position from, int deep, int minimalDeep);
-	    List<Position> accessibleCells(Position from, int deep, int minimalDeep, Position avoidWalkOn);
+	    List<Position> accessibleCells(Position from, int deep, int minimalDeep, List<Position> avoidWalkOn);
 	    String toString(Collection<Pellet> pellets, Game game);
 	    List<Position> visibleCells(Position position);
 	    List<Position> allEmptyCells();
@@ -702,6 +713,9 @@ class Player {
 	    }
 	    public List<Position> accessibleCells(Position from, int maximalDeep, int minimalDeep) {
 	        return this.grid.accessibleCells(from, maximalDeep, minimalDeep);
+	    }
+	    public List<Position> accessibleCells(Position from, int maximalDeep, int minimalDeep, List<Position> otherPacs) {
+	        return this.grid.accessibleCells(from, maximalDeep, minimalDeep, otherPacs);
 	    }
 	    public List<Pac> getEnemiesOn(List<Position> positions) {
 	        return player2.getPacs().stream()
@@ -838,10 +852,10 @@ class Player {
 	    }
 	    @Override
 	    public List<Position> accessibleCells(Position from, int deep, int minimalDeep) {
-	        return accessibleCells(from, deep, minimalDeep, null);
+	        return accessibleCells(from, deep, minimalDeep, new ArrayList<>());
 	    }
 	    @Override
-	    public List<Position> accessibleCells(Position from, int deep, int minimalDeep, Position avoidWalkOn) {
+	    public List<Position> accessibleCells(Position from, int deep, int minimalDeep, List<Position> avoidWalkOn) {
 	        CGLogger.log("start computing accessible cells from " + from + " deep = " + deep);
 	        Set<Position> positions = new HashSet<>();
 	        Set<GridPosition> done = new HashSet<>();
@@ -849,7 +863,9 @@ class Player {
 	        toDo.add(from);
 	        done.add(nodes.get(from));
 	        if (avoidWalkOn != null) {
-	            done.add(nodes.get(avoidWalkOn));
+	            for (Position pos: avoidWalkOn) {
+	                done.add(nodes.get(pos));
+	            }
 	        }
 	        int currentDeep = 0;
 	        while (!toDo.isEmpty() && currentDeep <= deep) {
