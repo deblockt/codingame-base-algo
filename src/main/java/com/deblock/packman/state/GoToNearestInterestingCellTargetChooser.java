@@ -30,7 +30,7 @@ public class GoToNearestInterestingCellTargetChooser implements GoToTargetBehavi
     private Optional<Position> tryToMove(Game game, int deep) {
         List<Position> cells = game.accessibleCells(pac.position, deep, pac.speed());
         List<Position> nonVisitedPositions = cells.stream().filter(p -> !game.player1HistoryPosition.contains(p)).collect(Collectors.toList());
-        Optional<Position> nonVisitedPositionsWithPellet = nonVisitedPositions.stream().filter(game::containsPellet).findFirst();
+        Optional<Position> nonVisitedPositionsWithPellet = nonVisitedPositions.stream().filter(game::containsPellet).max(Comparator.comparingInt(pos -> nbPelletNear(game, pos)));
         CGLogger.log("accessible cells " + cells);
         CGLogger.log("non visited cells " + nonVisitedPositions);
         CGLogger.log("non visited position with pellet " + nonVisitedPositionsWithPellet);
@@ -43,6 +43,13 @@ public class GoToNearestInterestingCellTargetChooser implements GoToTargetBehavi
         } else {
             return Optional.empty();
         }
+    }
+
+    private int nbPelletNear(Game game, Position pos) {
+        return (int) game.accessibleCells(pos, 1, 1)
+                .stream()
+                .filter(game::containsPellet)
+                .count();
     }
 
     @Override

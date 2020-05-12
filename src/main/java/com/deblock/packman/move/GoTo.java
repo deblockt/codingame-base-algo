@@ -34,11 +34,18 @@ public class GoTo implements PacMove {
             return "";
         }
         final Position nextPosition;
+        CGLogger.log("GOTO " + pac.speedTurnsLeft);
         if (pac.speedTurnsLeft > 0) {
+            CGLogger.log("using path " + this.path);
             nextPosition = this.path.pop(2);
         } else {
             nextPosition = this.path.pop();
         }
         return "MOVE " + pac.id + " " + nextPosition.x + " " + nextPosition.y + " " + comment;
+    }
+
+    @Override
+    public String toString() {
+        return this.action();
     }
 }

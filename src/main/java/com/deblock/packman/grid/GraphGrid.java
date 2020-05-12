@@ -1,6 +1,7 @@
 package com.deblock.packman.grid;
 
 import com.deblock.logger.CGLogger;
+import com.deblock.packman.game.Game;
 import com.deblock.packman.game.Pac;
 import com.deblock.packman.game.Pellet;
 import com.deblock.path.Dijkstra;
@@ -24,10 +25,10 @@ public class GraphGrid implements Grid {
 
     public void addLink(Position pos, Position accessible) {
         if (!nodes.containsKey(pos)) {
-            nodes.put(pos, new GridPosition(pos));
+            nodes.put(pos, new GridPosition(pos, this));
         }
         if (!nodes.containsKey(accessible)) {
-            nodes.put(accessible, new GridPosition(accessible));
+            nodes.put(accessible, new GridPosition(accessible, this));
         }
         nodes.get(pos).addNeighbour(nodes.get(accessible));
         nodes.get(accessible).addNeighbour(nodes.get(pos));
@@ -39,22 +40,32 @@ public class GraphGrid implements Grid {
 
     @Override
     public List<Position> accessibleCells(Position from, int deep, int minimalDeep) {
+        return accessibleCells(from, deep, minimalDeep, null);
+    }
+
+    @Override
+    public List<Position> accessibleCells(Position from, int deep, int minimalDeep, Position avoidWalkOn) {
         CGLogger.log("start computing accessible cells from " + from + " deep = " + deep);
-        Set<GridPosition> positions = new HashSet<>();
+        Set<Position> positions = new HashSet<>();
         Set<GridPosition> done = new HashSet<>();
         Set<Position> toDo = new HashSet<>();
         toDo.add(from);
-        int currentDeep = 1;
+        done.add(nodes.get(from));
+        if (avoidWalkOn != null) {
+            done.add(nodes.get(avoidWalkOn));
+        }
+        int currentDeep = 0;
         while (!toDo.isEmpty() && currentDeep <= deep) {
             Set<Position> newPos = new HashSet<>();
             for (Position pos: toDo) {
-                for (GridPosition accessible: nodes.get(pos).neighbour) {
+                Set<GridPosition> nei =  nodes.get(pos).neighbour;
+                if (currentDeep >= minimalDeep || nei.size() == 1) {
+                    positions.add(pos);
+                }
+                for (GridPosition accessible: nei) {
                     if (!done.contains(accessible)) {
                         newPos.add(accessible);
                         done.add(accessible);
-                        if (currentDeep >= minimalDeep) {
-                            positions.add(accessible);
-                        }
                     }
                 }
             }
@@ -70,10 +81,24 @@ public class GraphGrid implements Grid {
         return buildPath(dijkstra.pathToNearest(nodes.get(from), goToPositions.stream().map(nodes::get).collect(Collectors.toList())));
     }
 
+    @Override
+    public int getWidth() {
+        return this.width;
+    }
 
     @Override
-    public String toString(Collection<Pellet> pellets) {
+    public int getHeight() {
+        return this.height;
+    }
+
+
+    @Override
+    public String toString(Collection<Pellet> pellets, Game game) {
+        if (CGLogger.isSubmissionMode()) {
+            return "";
+        }
         Map<Position, Pellet> pelletsByPosition = pellets.stream().collect(Collectors.toMap(p -> p.position, Function.identity()));
+
         Map<Position, Pac> pacsByPosition = pacs.stream().collect(Collectors.toMap(p -> p.position, Function.identity()));
         String result = "";
         for (int y = 0; y < height; ++y) {
@@ -83,6 +108,8 @@ public class GraphGrid implements Grid {
                     result += "°";
                 } else if (pacsByPosition.containsKey(position)) {
                     result += pacsByPosition.get(position).isPlayer1 ? "1": "2";
+                } else if (game.player1HistoryPosition.contains(position)) {
+                    result += '_';
                 } else if (nodes.containsKey(position)) {
                     result += ' ';
                 } else {
@@ -135,9 +162,11 @@ public class GraphGrid implements Grid {
         private GridPosition right;
         private GridPosition left;
         private GridPosition bottom;
+        private GraphGrid grid;
 
-        private GridPosition(Position pos) {
+        private GridPosition(Position pos, GraphGrid grid) {
             super(pos.x, pos.y);
+            this.grid = grid;
         }
 
         @Override
@@ -147,14 +176,14 @@ public class GraphGrid implements Grid {
 
         public void addNeighbour(GridPosition gridPosition) {
             neighbour.add(gridPosition);
-            if (this.x < gridPosition.x) {
-                left = gridPosition;
-            } else if (this.x > gridPosition.x) {
+            if (gridPosition.x == this.x + 1 || (this.x == grid.width - 1 && gridPosition.x == 0)) {
                 right = gridPosition;
-            } else if (this.y < gridPosition.y) {
-                top = gridPosition;
-            } else if (this.y > gridPosition.y) {
+            } else if (gridPosition.x == this.x - 1 || (this.x == 0 && gridPosition.x == grid.width - 1)) {
+                left = gridPosition;
+            } else if (gridPosition.y == this.y + 1 || (this.y == grid.height - 1 && gridPosition.y == 0)) {
                 bottom = gridPosition;
+            } else if (gridPosition.y == this.y - 1 || (this.y == 0 && gridPosition.y == grid.height - 1)) {
+                top = gridPosition;
             }
         }
 

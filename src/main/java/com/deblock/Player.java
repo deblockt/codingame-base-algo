@@ -6,6 +6,7 @@ import com.deblock.packman.move.PacMove;
 import com.deblock.packman.game.Game;
 import com.deblock.packman.grid.GridReader;
 import com.deblock.packman.game.Pac;
+import com.deblock.packman.state.SuperPelletTargetChooser;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -13,7 +14,7 @@ import java.util.stream.Collectors;
 class Player {
 
     public static void main(String args[]) {
-        CGLogger.submissionMode();
+        //CGLogger.submissionMode();
 
         Scanner in = new Scanner(System.in);
         Game game = new Game();
@@ -26,6 +27,9 @@ class Player {
             game.refreshPellets(in);
             CGLogger.enableLog();
             CGLogger.startTurn();
+
+            // hack to avoid perf issue
+            SuperPelletTargetChooser.getPelletForPac(game, game.player1.getPacs().iterator().next());
             CGLogger.log("\n" + game.toString());
 
             for (Integer pacId: new ArrayList<>(lastMoves.keySet())) {

@@ -24,7 +24,7 @@ public class Game {
 
     @Override
     public String toString() {
-        return grid.toString(pellets.values());
+        return grid.toString(pellets.values(), this);
     }
 
     public Set<Position> getBestPellets() {
@@ -50,39 +50,48 @@ public class Game {
             playerToUpdate.refreshPac(pacId, in);
         }
 
-        player1.removeDeletedPac(allPacIdsPlayer1);
-        player2.removeDeletedPac(allPacIdsPlayer2);
+        player1.removeUnseePac(allPacIdsPlayer1);
+        player2.removeUnseePac(allPacIdsPlayer2);
         player1HistoryPosition.addAll(
             player1.getPacs().stream().flatMap(pac -> pac.traveledPositions.stream()).collect(Collectors.toList())
         );
-        this.deletePelletsFromPacVision(player1.getPacs());
 
         List<Pac> pacs = new ArrayList<>(player1.getPacs());
         pacs.addAll(player2.getPacs());
         this.grid.refresh(pacs);
     }
 
-    private void deletePelletsFromPacVision(Collection<Pac> pacs) {
+    private Set<Position> pacVision(Collection<Pac> pacs) {
+        Set<Position> result = new HashSet<>();
         for (Pac pac: pacs) {
-            CGLogger.log("pac " + pac.id + "can see " +  grid.visibleCells(pac.position));
-            for (Position position: grid.visibleCells(pac.position)) {
-                pellets.remove(position);
-                bestPellets.remove(position);
-            }
+            List<Position> visibleCells = grid.visibleCells(pac.position);
+            CGLogger.log("pac " + pac.id + "can see " +  visibleCells);
+            result.addAll(visibleCells);
         }
+        return result;
     }
 
     public void refreshPellets(Scanner in) {
+        Set<Position> visiblePositions = this.pacVision(player1.getPacs());
+        Set<Position> visiblePellets = new HashSet<>();
         int visiblePelletCount = in.nextInt();
         for (int i = 0; i < visiblePelletCount; i++) {
             int x = in.nextInt();
             int y = in.nextInt();
             Position position = Position.of(x, y);
+            visiblePellets.add(position);
             int value = in.nextInt();
-            pellets.put(position, new Pellet(position, value));
             if (value == 10) {
                 bestPellets.add(position);
             }
+        }
+
+        Set<Position> pelletsToRemove = new HashSet<>(visiblePositions);
+        pelletsToRemove.removeAll(visiblePellets);
+        for (Position position: pelletsToRemove) {
+            pellets.remove(position);
+            player1HistoryPosition.add(position);
+            bestPellets.remove(position);
         }
     }
 
@@ -118,4 +127,12 @@ public class Game {
         return this.pellets.containsKey(position);
     }
 
+    public void addPac(Pac pac, Position of) {
+        if (pac.isPlayer1) {
+            player1.addPac(pac);
+        } else {
+            player2.addPac(pac);
+        }
+        pac.position(of);
+    }
 }

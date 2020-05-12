@@ -9,11 +9,11 @@ It can be used like that:
 MinMax<ChessBoard, ChessMove> minMax = new MinMax<>();
 ChessPlayer player1 = new CheesPlayer(WHITE);
 ChessPlayer player2 = new ChessPlayer(BLACK);
-ChessBoard board = new ChessBoard();
+ChessBoard game = new ChessBoard();
 int minMaxDeep = 5;
 
 // the player 1 should be you player
-ChessMove move = minMax.move(player1, player2, board, minMaxDeep);
+ChessMove move = minMax.move(player1, player2, game, minMaxDeep);
 
 System.out.println(move);
 

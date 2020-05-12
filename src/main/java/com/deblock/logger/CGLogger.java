@@ -26,4 +26,8 @@ public class CGLogger {
     public static void submissionMode() {
         submissionMode = true;
     }
+
+    public static boolean isSubmissionMode() {
+        return submissionMode;
+    }
 }

@@ -15,10 +15,12 @@ public class GridReader {
         for (int i = 0; i < height; i++) {
             rows.add(in.nextLine());
         }
-        return readFromArray(width, height, rows);
+        return readFromArray(rows);
     }
 
-    public static GraphGrid readFromArray(int width, int height, List<String> rows) {
+    public static GraphGrid readFromArray(List<String> rows) {
+        int width = rows.get(0).length();
+        int height = rows.size();
         GraphGrid gird = new GraphGrid(width, height);
         List<Position> positions = new ArrayList<>();
         Position firstEmptyCell = null;
@@ -47,7 +49,6 @@ public class GridReader {
             toDo = newPos;
         }
 
-        //  gird.allEmptyCells().forEach(c -> CGLogger.log(c.toString()));
         return gird;
     }
 

@@ -11,9 +11,10 @@ import java.util.Optional;
 import java.util.Scanner;
 
 public class Pac {
-    private static String ROCK = "ROCK";
-    private static String PAPER = "PAPER";
-    private static String SCISSORS = "SCISSORS";
+    public final static String ROCK = "ROCK";
+    public final static String PAPER = "PAPER";
+    public final static String SCISSORS = "SCISSORS";
+    public final static String DEAD = "DEAD";
 
     public final int id;
     public Position position = null;
@@ -31,7 +32,14 @@ public class Pac {
         this.brain = new Brain(this, game);
     }
 
-    public void refresh(Scanner in, Game game) {
+    public Pac(int id, boolean isPlayer1, Game game, String type) {
+        this.id = id;
+        this.isPlayer1 = isPlayer1;
+        this.typeId = type;
+        this.brain = new Brain(this, game);
+    }
+
+    public Pac refresh(Scanner in, Game game) {
         Position newPosition = Position.of(in.nextInt(), in.nextInt());
         hasMoved = !newPosition.equals(this.position);
 
@@ -56,6 +64,8 @@ public class Pac {
         this.typeId = in.next();
         this.speedTurnsLeft = in.nextInt();
         this.abilityCooldown = in.nextInt();
+
+        return this;
     }
 
     public PacMove play(List<PacMove> partnerMoves) {
@@ -69,6 +79,9 @@ public class Pac {
         return this.position;
     }
 
+    public void position(Position pos) {
+        this.position = pos;
+    }
     public String typeToWin(Pac other) {
         if (other.typeId.equals(ROCK)) {
             return PAPER;
